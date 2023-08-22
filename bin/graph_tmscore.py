@@ -91,11 +91,11 @@ if __name__ == '__main__':
     for fragment in fragment_frame_list:
         fragment_start = fragment[0].id[1]
         fragment_end = fragment[-1].id[1]
-        fragment_out_path = os.path.join(fragment_dir, f"{query_name}_{fragment_start}_{fragment_end}.pdb")
+        fragment_out_path = os.path.join(fragment_dir, f"{query_name[:5]}_{fragment_start}_{fragment_end}.pdb")
         utils.get_structure(res_range=fragment, res_chain=query_name[4], structure=qstructure,
                             out_path=fragment_out_path, io_handler=io_handler)
         fragment_path_list.append(fragment_out_path)
-
+    print(fragment_path_list)
     ####################################################################################################################
 
     # Create a list to store tm-scores
@@ -126,16 +126,17 @@ if __name__ == '__main__':
     tm_score_results.sort(key=lambda x: x[0])
 
     # Divide and store the sorted data
-    x = [i[0] for i in tm_score_results]
+    x_start = [i[0] for i in tm_score_results]
+    x_end = [i + len(tchain_residues) - 1 for i in x_start]
     y = [i[1] for i in tm_score_results]
 
     # Save the results a csv file at the output directory
-    graph_df = pd.DataFrame({"x": x, "y": y})
+    graph_df = pd.DataFrame({"x_start": x_start, "x_end": x_end, "y": y})
 
     out_subdir = os.path.join(out_dir, query_name[1:3])
     os.makedirs(out_subdir, exist_ok=True)
     out_path = os.path.join(out_subdir, f"{query_name}_vs_{target_name}_graph.csv")
-    graph_df.to_csv(out_path)
+    graph_df.to_csv(out_path, index=False)
 
     # Remove the temporary directory
     shutil.rmtree(fragment_dir)
