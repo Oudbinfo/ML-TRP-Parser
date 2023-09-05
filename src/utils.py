@@ -1,6 +1,7 @@
 import json
-import numpy as np
 from Bio.PDB import Select
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def get_res_index(res_num: str, chain_residues: list):

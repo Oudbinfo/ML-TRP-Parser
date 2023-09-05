@@ -10,14 +10,17 @@ import json
 import tempfile
 import argparse
 import warnings
-import src.predictor_utils as utils
+import logging
+import src.utils as utils
 from Bio.PDB import PDBIO, is_aa, PDBParser
 from src.tmalign import Tmalign
 
 # Ignore warnings
 warnings.filterwarnings("ignore")
 
-####################################################################################################################
+# Configure the logging module
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 if __name__ == '__main__':
     # Create an argument parser object
@@ -36,6 +39,8 @@ if __name__ == '__main__':
     # Parse command line arguments
     args = parser.parse_args()
 
+    logging.debug(f"Parsed command line arguments: {args}")
+
     # Access the variable values
     in_path = args.in_path
     out_dir = args.out_dir
@@ -47,21 +52,24 @@ if __name__ == '__main__':
     io_handler = PDBIO()
     tm_align = Tmalign()
 
-    ####################################################################################################################
+    logging.debug("Modules instantiated.")
 
     # Read the input JSON file
     with open(in_path, 'r') as fp:
         input_dict = json.load(fp)
 
-    # Load the essential data
+    logging.debug("Loaded input JSON file.")
+
+    # Extract the essential data
     query_name = input_dict["query"]
     target_name = input_dict["target"]
+
+    logging.debug(f"Query: {query_name}")
+    logging.debug(f"Target: {target_name}")
 
     # Specify the path to the query and target structures
     query_structure_path = os.path.join(query_db, query_name[1:3], f"{query_name[:5]}.pdb")
     target_structure_path = os.path.join(target_db, target_name[1:3], f"{target_name}_tmax.pdb")
-
-    ####################################################################################################################
 
     # Parse the structure from the PDB file
     qstructure = pdb_parser.get_structure(query_name, query_structure_path)
@@ -75,7 +83,7 @@ if __name__ == '__main__':
     tchain = tstructure[0][target_name[4]]
     tchain_residues = [residue for residue in tchain.get_residues() if is_aa(residue.get_resname())]
 
-    ####################################################################################################################
+    logging.debug("Loaded query and target structures.")
 
     # Specify the step of framing the fragments
     # (frame_step = 1 --> moving the frame 1 residue per time --> highest resolution)
@@ -95,8 +103,8 @@ if __name__ == '__main__':
         utils.get_structure(res_range=fragment, res_chain=query_name[4], structure=qstructure,
                             out_path=fragment_out_path, io_handler=io_handler)
         fragment_path_list.append(fragment_out_path)
-    print(fragment_path_list)
-    ####################################################################################################################
+
+    logging.debug("Fragmented the query structure.")
 
     # Create a list to store tm-scores
     tmscore_results = []
@@ -119,7 +127,7 @@ if __name__ == '__main__':
         # Add the results to the list as a pair
         tmscore_results.append([fragment_start, tm_score])
 
-    ####################################################################################################################
+    logging.debug("Successfully performed structural alignments.")
 
     # Sort the result list based on the query fragment start residue (x)
     tm_score_results = [[int(i[0]), i[1]] for i in tmscore_results]
@@ -138,7 +146,8 @@ if __name__ == '__main__':
     out_path = os.path.join(out_subdir, f"{query_name}_vs_{target_name}_graph.csv")
     graph_df.to_csv(out_path, index=False)
 
+    logging.debug(f"Results saved to CSV file: {out_path}")
     # Remove the temporary directory
     shutil.rmtree(fragment_dir)
 
-    # Finish
+    logging.debug("Finished.")
