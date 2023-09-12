@@ -12,6 +12,6 @@ Bash script provides compatibility with SGE systems.
 Detects and analyses peaks on the generated graphs.
 Extracts features from peaks and labels them based on RepeatsDB reference data.
 
-## evalue_graph_features.ipynb:
+## evaluate_graph_features.ipynb:
 Assesses the quality of the extracted features.
 Uses Logistic Regression and Random Forest Classifier to develop a predictive model for peak detection.
